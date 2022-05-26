@@ -50,10 +50,10 @@ std::unique_ptr<Screen> Settings::CreateScreen1() {
 
 std::unique_ptr<Screen> Settings::CreateScreen2() {
   std::array<Screens::List::Applications, 4> applications {{
-    {Symbols::shoe, "Steps", Apps::SettingSteps},
     {Symbols::clock, "Set date", Apps::SettingSetDate},
     {Symbols::clock, "Set time", Apps::SettingSetTime},
-    {Symbols::batteryHalf, "Battery", Apps::BatteryInfo}}};
+    {Symbols::batteryHalf, "Battery", Apps::BatteryInfo},
+    {Symbols::batteryThreeQuarter, "Battery style", Apps::SettingBatteryFormat}}};
 
   return std::make_unique<Screens::List>(1, 4, app, settingsController, applications);
 }
@@ -63,7 +63,7 @@ std::unique_ptr<Screen> Settings::CreateScreen3() {
   std::array<Screens::List::Applications, 4> applications {{
     {Symbols::clock, "Chimes", Apps::SettingChimes},
     {Symbols::tachometer, "Shake Calib.", Apps::SettingShakeThreshold},
-    {Symbols::check, "Firmware", Apps::FirmwareValidation},
+    {Symbols::shoe, "Steps", Apps::SettingSteps},
     {Symbols::bluetooth, "Bluetooth", Apps::SettingBluetooth}
   }};
 
@@ -73,8 +73,8 @@ std::unique_ptr<Screen> Settings::CreateScreen3() {
 std::unique_ptr<Screen> Settings::CreateScreen4() {
 
   std::array<Screens::List::Applications, 4> applications {{
+    {Symbols::check, "Firmware", Apps::FirmwareValidation},
     {Symbols::list, "About", Apps::SysInfo},
-    {Symbols::none, "None", Apps::None},
     {Symbols::none, "None", Apps::None},
     {Symbols::none, "None", Apps::None}
   }};
