@@ -19,6 +19,7 @@
 #include "components/timer/TimerController.h"
 #include "components/alarm/AlarmController.h"
 #include "components/fs/FS.h"
+#include "components/console/Console.h"
 #include "touchhandler/TouchHandler.h"
 #include "buttonhandler/ButtonHandler.h"
 #include "buttonhandler/ButtonActions.h"
@@ -129,6 +130,7 @@ namespace Pinetime {
       Pinetime::Controllers::TouchHandler& touchHandler;
       Pinetime::Controllers::ButtonHandler& buttonHandler;
       Pinetime::Controllers::NimbleController nimbleController;
+      Pinetime::Components::Console console;
 
       static void Process(void* instance);
       void Work();

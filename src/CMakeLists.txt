@@ -480,6 +480,7 @@ list(APPEND SOURCE_FILES
         components/motion/MotionController.cpp
         components/ble/NimbleController.cpp
         components/ble/DeviceInformationService.cpp
+        components/ble/BleNus.cpp
         components/ble/CurrentTimeClient.cpp
         components/ble/AlertNotificationClient.cpp
         components/ble/DfuService.cpp
@@ -524,6 +525,7 @@ list(APPEND SOURCE_FILES
         components/heartrate/Biquad.cpp
         components/heartrate/Ptagc.cpp
         components/heartrate/HeartRateController.cpp
+        components/console/Console.cpp
 
         buttonhandler/ButtonHandler.cpp
         touchhandler/TouchHandler.cpp
@@ -554,6 +556,7 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/motion/MotionController.cpp
         components/ble/NimbleController.cpp
         components/ble/DeviceInformationService.cpp
+        components/ble/BleNus.cpp
         components/ble/CurrentTimeClient.cpp
         components/ble/AlertNotificationClient.cpp
         components/ble/DfuService.cpp
@@ -589,6 +592,7 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/heartrate/Ptagc.cpp
         components/motor/MotorController.cpp
         components/fs/FS.cpp
+        components/console/Console.cpp
         buttonhandler/ButtonHandler.cpp
         touchhandler/TouchHandler.cpp
         )

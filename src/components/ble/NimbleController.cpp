@@ -20,6 +20,7 @@
 #include "components/datetime/DateTimeController.h"
 #include "components/fs/FS.h"
 #include "systemtask/SystemTask.h"
+#include "components/ble/BleNus.h"
 
 using namespace Pinetime::Controllers;
 
@@ -89,6 +90,7 @@ void NimbleController::Init() {
   ble_svc_gatt_init();
 
   deviceInformationService.Init();
+  bleNusService.Init();
   currentTimeClient.Init();
   currentTimeService.Init();
   musicService.Init();
@@ -208,6 +210,8 @@ int NimbleController::OnGAPEvent(ble_gap_event* event) {
         connectionHandle = event->connect.conn_handle;
         bleController.Connect();
         systemTask.PushMessage(Pinetime::System::Messages::BleConnected);
+        connectionHandle = event->connect.conn_handle;
+        bleNusService.SetConnectionHandle(event->connect.conn_handle);
         // Service discovery is deferred via systemtask
       }
       break;
