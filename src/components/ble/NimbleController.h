@@ -13,6 +13,7 @@
 #include "components/ble/CurrentTimeClient.h"
 #include "components/ble/CurrentTimeService.h"
 #include "components/ble/DeviceInformationService.h"
+#include "BleNus.h"
 #include "components/ble/DfuService.h"
 #include "components/ble/FSService.h"
 #include "components/ble/HeartRateService.h"
@@ -67,6 +68,9 @@ namespace Pinetime {
       Pinetime::Controllers::WeatherService& weather() {
         return weatherService;
       };
+      Pinetime::Controllers::BleNus& bleNus() {
+        return bleNusService;
+      };
 
       uint16_t connHandle();
       void NotifyBatteryLevel(uint8_t level);
@@ -91,6 +95,7 @@ namespace Pinetime {
       DfuService dfuService;
 
       DeviceInformationService deviceInformationService;
+      BleNus bleNusService;
       CurrentTimeClient currentTimeClient;
       AlertNotificationService anService;
       AlertNotificationClient alertNotificationClient;

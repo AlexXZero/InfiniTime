@@ -19,6 +19,13 @@
 
 #include <memory>
 
+#include <libraries/log/nrf_log_backend_interface.h>
+#include <libraries/log/src/nrf_log_backend_serial.h>
+#include <libraries/log/nrf_log.h>
+#include <libraries/log/nrf_log_ctrl.h>
+#include <libraries/log/nrf_log_default_backends.h>
+
+
 using namespace Pinetime::System;
 
 namespace {
@@ -102,7 +109,8 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                      spiNorFlash,
                      heartRateController,
                      motionController,
-                     fs) {
+                     fs),
+    console(*this, nimbleController, fs, lvgl, motorController, touchPanel, spiNorFlash, twiMaster, motionController) {
 }
 
 void SystemTask::Start() {
@@ -167,6 +175,7 @@ void SystemTask::Work() {
   heartRateSensor.Disable();
   heartRateApp.Start();
 
+  console.Init();
   buttonHandler.Init(this);
 
   // Setup Interrupts
@@ -438,6 +447,9 @@ void SystemTask::Work() {
           } else {
             nimbleController.DisableRadio();
           }
+          break;
+        case Messages::ConsoleProcess:
+          console.Process();
           break;
         default:
           break;
