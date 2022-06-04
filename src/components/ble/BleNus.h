@@ -17,7 +17,7 @@ namespace Pinetime {
       BleNus();
       void Init();
       void SetConnectionHandle(uint16_t connection_handle);
-      void Print(const std::string str);
+      void Print(const void *buf, uint16_t len);
 
       void RegisterRxCallback(std::function<void(char*, int)> f);
 

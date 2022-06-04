@@ -26,9 +26,8 @@ void BleNus::SetConnectionHandle(uint16_t connection_handle) {
   connectionHandle = connection_handle;
 }
 
-void BleNus::Print(const std::string str) {
-  os_mbuf* om;
-  om = ble_hs_mbuf_from_flat(str.c_str(), str.length());
+void BleNus::Print(const void *buf, uint16_t len) {
+  os_mbuf* om = ble_hs_mbuf_from_flat(buf, len);
 
   if (om) {
     ble_gattc_notify_custom(connectionHandle, attributeReadHandle, om);
