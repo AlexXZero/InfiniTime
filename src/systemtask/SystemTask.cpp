@@ -19,13 +19,6 @@
 
 #include <memory>
 
-#include <libraries/log/nrf_log_backend_interface.h>
-#include <libraries/log/src/nrf_log_backend_serial.h>
-#include <libraries/log/nrf_log.h>
-#include <libraries/log/nrf_log_ctrl.h>
-#include <libraries/log/nrf_log_default_backends.h>
-
-
 using namespace Pinetime::System;
 
 namespace {
@@ -110,7 +103,7 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                      heartRateController,
                      motionController,
                      fs),
-    console(*this, nimbleController, fs, lvgl, motorController, touchPanel, spiNorFlash, twiMaster, motionController) {
+    console(*this, nimbleController, motorController) {
 }
 
 void SystemTask::Start() {
