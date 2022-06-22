@@ -70,7 +70,7 @@ namespace Pinetime {
         return currentDateTime;
       }
       std::chrono::seconds Uptime() const {
-        return uptime;
+        return std::chrono::duration_cast<std::chrono::seconds>(uptime);
       }
 
       void Register(System::SystemTask* systemTask);
@@ -88,7 +88,7 @@ namespace Pinetime {
 
       uint32_t previousSystickCounter = 0;
       std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> currentDateTime;
-      std::chrono::seconds uptime {0};
+      std::chrono::nanoseconds uptime {0};
 
       bool isMidnightAlreadyNotified = false;
       bool isHourAlreadyNotified = true;

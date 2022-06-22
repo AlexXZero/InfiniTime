@@ -50,7 +50,7 @@ namespace Pinetime {
       const EventLogIterator& end() const;
       void EraseAll();
 
-    private:
+    //private:
       void WriteRaw(uint32_t event);
       void WriteEvent(uint32_t event);
       static size_t FindLastPage(IEventLogStorage& storage);
