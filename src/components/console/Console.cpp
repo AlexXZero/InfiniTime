@@ -1,16 +1,19 @@
 #include "Console.h"
 #include "components/ble/BleNus.h"
 #include "components/ble/NimbleController.h"
+#include "components/eventlog/EventLog.h"
 #include "systemtask/SystemTask.h"
 
 using namespace Pinetime::Components;
 
 Console::Console(Pinetime::System::SystemTask& systemTask,
                  Pinetime::Controllers::NimbleController& nimbleController,
-                 Pinetime::Controllers::MotorController& motorController)
+                 Pinetime::Controllers::MotorController& motorController,
+                 Pinetime::Components::EventLog& eventlog)
   : systemTask {systemTask},
     nimbleController {nimbleController},
-    motorController {motorController} {
+    motorController {motorController},
+    eventlog {eventlog} {
 }
 
 void Console::Init() {
@@ -25,7 +28,37 @@ void Console::Print(const std::string str) {
   nimbleController.bleNus().Print(str);
 }
 
+static char process_cmd = 0;
+static EventLogIterator event;
+
 void Console::Process() {
+  static std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> prev_time;
+  auto cur_time = eventlog.dateTimeController.CurrentDateTime();
+  if (std::chrono::duration_cast<std::chrono::milliseconds>(cur_time - prev_time).count() < 20) {
+    // avoid smaping
+    systemTask.PushMessage(Pinetime::System::Messages::ConsoleProcess);
+    return;
+  }
+  prev_time = cur_time;
+
+  switch (process_cmd) {
+  case 'E':
+    if (event == eventlog.end()) {
+      Print("E:\r\n");
+    } else {
+      char buf[32];
+      snprintf(buf, sizeof(buf), "E: %u,%08x\r\n", event.Index(), event.Value());
+      Print(buf);
+      ++event;
+      systemTask.PushMessage(Pinetime::System::Messages::ConsoleProcess);
+      return;
+    }
+    break;
+  default:
+    Print(std::string() + process_cmd + ":NI\r\n");
+    break;
+  }
+  process_cmd = 0;
 }
 
 void Console::Received(const char* str, int length) {
@@ -49,6 +82,23 @@ void Console::Received(const char* str, int length) {
       case 'S': // sleep
         systemTask.PushMessage(Pinetime::System::Messages::GoToSleep);
         Print("S:\r\n");
+        break;
+      case 'E':
+        process_cmd = str[i];
+        event = eventlog.begin();
+        systemTask.PushMessage(Pinetime::System::Messages::ConsoleProcess);
+        break;
+      case 'R':
+        eventlog.Write<Event::Simple>(SimpleEvent::SoftwareReset);
+        Print("R:\r\n");
+        break;
+      case 'T':
+        eventlog.SwapPages();
+        Print("T:\r\n");
+        break;
+      case 'B':
+        systemTask.PushMessage(Pinetime::System::Messages::MeasureBatteryTimerExpired);
+        Print("B:\r\n");
         break;
       default:
         shell = Shell::None;

@@ -16,11 +16,14 @@ namespace Pinetime {
   }
 
   namespace Components {
+    class EventLog;
+
     class Console {
     public:
       Console(Pinetime::System::SystemTask& systemTask,
               Pinetime::Controllers::NimbleController& nimbleController,
-              Pinetime::Controllers::MotorController& motorController);
+              Pinetime::Controllers::MotorController& motorController,
+              Pinetime::Components::EventLog& eventlog);
 
       void Init();
       void Process();
@@ -31,6 +34,7 @@ namespace Pinetime {
       Pinetime::System::SystemTask& systemTask;
       Pinetime::Controllers::NimbleController& nimbleController;
       Pinetime::Controllers::MotorController& motorController;
+      Pinetime::Components::EventLog& eventlog;
     };
   }
 }

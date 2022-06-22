@@ -105,7 +105,7 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                      heartRateController,
                      motionController,
                      fs),
-    console(*this, nimbleController, motorController) {
+    console(*this, nimbleController, motorController, eventlog) {
 }
 
 void SystemTask::Start() {

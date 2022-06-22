@@ -83,11 +83,11 @@ void Battery::SaadcEventHandler(nrfx_saadc_evt_t const* p_event) {
       newPercent = std::min((voltage - battery_min) * 100 / (battery_max - battery_min), isCharging ? 99 : 100);
     }
 
-    if ((isPowerPresent && newPercent > percentRemaining) || (!isPowerPresent && newPercent < percentRemaining) || firstMeasurement) {
+    //if ((isPowerPresent && newPercent > percentRemaining) || (!isPowerPresent && newPercent < percentRemaining) || firstMeasurement) {
       firstMeasurement = false;
       percentRemaining = newPercent;
       systemTask->PushMessage(System::Messages::BatteryPercentageUpdated);
-    }
+    //}
 
     nrfx_saadc_uninit();
     isReading = false;
