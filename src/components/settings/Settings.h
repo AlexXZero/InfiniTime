@@ -11,6 +11,8 @@ namespace Pinetime {
       enum class ClockType : uint8_t { H24, H12 };
       enum class Notification : uint8_t { ON, OFF };
       enum class ChimesOption : uint8_t { None, Hours, HalfHours };
+      enum class BatteryPercentage : u_int8_t { ON, OFF };
+      enum class BatteryColor : u_int8_t { ON, OFF };
       enum class WakeUpMode : uint8_t {
         SingleTap = 0,
         DoubleTap = 1,
@@ -129,6 +131,26 @@ namespace Pinetime {
         return settings.notificationStatus;
       };
 
+      void SetBatteryPercentageStatus(BatteryPercentage status) {
+        if (status != settings.batteryPercentageStatus) {
+          settingsChanged = true;
+        }
+        settings.batteryPercentageStatus = status;
+      };
+      BatteryPercentage GetBatteryPercentageStatus() const {
+        return settings.batteryPercentageStatus;
+      };
+
+      void SetBatteryColorStatus(BatteryColor status) {
+        if (status != settings.batteryColorStatus) {
+          settingsChanged = true;
+        }
+        settings.batteryColorStatus = status;
+      };
+      BatteryColor GetBatteryColorStatus() const {
+        return settings.batteryColorStatus;
+      };
+
       void SetScreenTimeOut(uint32_t timeout) {
         if (timeout != settings.screenTimeOut) {
           settingsChanged = true;
@@ -221,7 +243,8 @@ namespace Pinetime {
 
         ClockType clockType = ClockType::H24;
         Notification notificationStatus = Notification::ON;
-
+        BatteryPercentage batteryPercentageStatus = BatteryPercentage::OFF;
+        BatteryColor batteryColorStatus = BatteryColor::OFF;
         uint8_t clockFace = 0;
         ChimesOption chimesOption = ChimesOption::None;
 

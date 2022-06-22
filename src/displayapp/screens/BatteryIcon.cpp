@@ -1,8 +1,23 @@
+#include <lvgl/lvgl.h>
 #include "displayapp/screens/BatteryIcon.h"
 #include <cstdint>
 #include "displayapp/screens/Symbols.h"
 
 using namespace Pinetime::Applications::Screens;
+
+const lv_color_t BatteryIcon::GetBatteryColor(uint8_t batteryPercent) {
+  if (batteryPercent > 75)
+    return LV_COLOR_GREEN;
+  if (batteryPercent > 50)
+    return LV_COLOR_YELLOW;
+  if (batteryPercent > 25)
+    return LV_COLOR_ORANGE;
+  return LV_COLOR_RED;
+}
+
+const lv_color_t BatteryIcon::GetDefaultBatteryColor() {
+  return LV_COLOR_WHITE;
+}
 
 const char* BatteryIcon::GetBatteryIcon(uint8_t batteryPercent) {
   if (batteryPercent > 87)
