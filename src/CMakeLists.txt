@@ -500,6 +500,7 @@ list(APPEND SOURCE_FILES
         components/settings/Settings.cpp
         components/timer/TimerController.cpp
         components/alarm/AlarmController.cpp
+        components/eventlog/EventLog.cpp
         components/fs/FS.cpp
         drivers/Cst816s.cpp
         FreeRTOS/port.c
@@ -572,6 +573,7 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/settings/Settings.cpp
         components/timer/TimerController.cpp
         components/alarm/AlarmController.cpp
+        components/eventlog/EventLog.cpp
         drivers/Cst816s.cpp
         FreeRTOS/port.c
         FreeRTOS/port_cmsis_systick.c

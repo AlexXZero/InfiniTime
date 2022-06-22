@@ -20,6 +20,7 @@
 #include <memory>
 
 using namespace Pinetime::System;
+using namespace Pinetime::Components;
 
 namespace {
   static inline bool in_isr(void) {
@@ -94,6 +95,7 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
     fs {fs},
     touchHandler {touchHandler},
     buttonHandler {buttonHandler},
+    eventlog {*this, eventlogStorage, dateTimeController},
     nimbleController(*this,
                      bleController,
                      dateTimeController,
@@ -286,6 +288,7 @@ void SystemTask::Work() {
           heartRateApp.PushMessage(Pinetime::Applications::HeartRateTask::Messages::GoToSleep);
           break;
         case Messages::OnNewTime:
+          eventlog.Write<Event::UnixTime>();
           ReloadIdleTimer();
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::UpdateDateTime);
           if (alarmController.State() == Controllers::AlarmController::AlarmState::Set) {
@@ -320,11 +323,13 @@ void SystemTask::Work() {
           motorController.StopRinging();
           break;
         case Messages::BleConnected:
+          eventlog.Write<Event::Simple>(SimpleEvent::BleConnect);
           ReloadIdleTimer();
           isBleDiscoveryTimerRunning = true;
           bleDiscoveryTimer = 5;
           break;
         case Messages::BleFirmwareUpdateStarted:
+          eventlog.Write<Event::Simple>(SimpleEvent::DfuStart);
           doNotGoToSleep = true;
           if (isSleeping && !isWakingUp) {
             GoToRunning();
@@ -332,6 +337,7 @@ void SystemTask::Work() {
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::BleFirmwareUpdateStarted);
           break;
         case Messages::BleFirmwareUpdateFinished:
+          eventlog.Write<Event::Simple>(SimpleEvent::DfuStop);
           if (bleController.State() == Pinetime::Controllers::Ble::FirmwareUpdateStates::Validated) {
             NVIC_SystemReset();
           }
@@ -410,6 +416,7 @@ void SystemTask::Work() {
           }
           break;
         case Messages::OnNewHalfHour:
+          eventlog.Write<Event::Event16>(Event16Event::StepCounter, (uint16_t)motionController.NbSteps());
           using Pinetime::Controllers::AlarmController;
           if (settingsController.GetChimeOption() == Controllers::Settings::ChimesOption::HalfHours && alarmController.State() != AlarmController::AlarmState::Alerting) {
             if (isSleeping && !isWakingUp) {
@@ -420,6 +427,7 @@ void SystemTask::Work() {
           }
           break;
         case Messages::OnChargingEvent:
+          eventlog.Write<Event::Simple>(SimpleEvent::ChargeStart);
           batteryController.ReadPowerState();
           motorController.RunForDuration(15);
           ReloadIdleTimer();
@@ -431,6 +439,7 @@ void SystemTask::Work() {
           batteryController.MeasureVoltage();
           break;
         case Messages::BatteryPercentageUpdated:
+          eventlog.Write<Event::Event16>(Event16Event::VccData, batteryController.Voltage());
           nimbleController.NotifyBatteryLevel(batteryController.PercentRemaining());
           break;
         case Messages::OnPairing:
@@ -439,6 +448,9 @@ void SystemTask::Work() {
           }
           motorController.RunForDuration(35);
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::ShowPairingKey);
+          break;
+        case Messages::SwapEventlogPages:
+          eventlog.SwapPages();
           break;
         case Messages::BleRadioEnableToggle:
           if(settingsController.GetBleRadioEnabled()) {
