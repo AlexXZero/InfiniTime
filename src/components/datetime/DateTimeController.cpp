@@ -61,18 +61,18 @@ void DateTime::UpdateTime(uint32_t systickCounter) {
   }
 
   /*
-   * 1000 ms = 1024 ticks
+   * 1953125 ns = 2 ticks
    */
-  auto correctedDelta = systickDelta / 1024;
-  auto rest = (systickDelta - (correctedDelta * 1024));
+  auto correctedDelta = systickDelta / 2;
+  auto rest = (systickDelta - (correctedDelta * 2));
   if (systickCounter >= rest) {
     previousSystickCounter = systickCounter - rest;
   } else {
     previousSystickCounter = 0xffffff - (rest - systickCounter);
   }
 
-  currentDateTime += std::chrono::seconds(correctedDelta);
-  uptime += std::chrono::seconds(correctedDelta);
+  currentDateTime += std::chrono::nanoseconds(correctedDelta * 1953125ULL);
+  uptime += std::chrono::nanoseconds(correctedDelta * 1953125ULL);
 
   auto dp = date::floor<date::days>(currentDateTime);
   auto time = date::make_time(currentDateTime - dp);
