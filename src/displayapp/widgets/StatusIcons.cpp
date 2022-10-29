@@ -34,7 +34,15 @@ void StatusIcons::Update() {
   batteryPercentRemaining = batteryController.PercentRemaining();
   if (batteryPercentRemaining.IsUpdated()) {
     auto batteryPercent = batteryPercentRemaining.Get();
-    batteryIcon.SetBatteryPercentage(batteryPercent);
+    if (batteryPercent > 75)
+      batteryIcon.SetColor(LV_COLOR_GREEN);
+    else if (batteryPercent > 50)
+      batteryIcon.SetColor(LV_COLOR_YELLOW);
+    else if (batteryPercent > 25)
+      batteryIcon.SetColor(LV_COLOR_ORANGE);
+    else
+      batteryIcon.SetColor(LV_COLOR_RED);
+    batteryIcon.SetBatteryPercentage(batteryPercent, true);
   }
 
   bleState = bleController.IsConnected();
