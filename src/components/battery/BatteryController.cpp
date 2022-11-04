@@ -1,4 +1,5 @@
 #include "components/battery/BatteryController.h"
+#include "components/utility/LinearApproximation.h"
 #include "drivers/PinMap.h"
 #include <hal/nrf_gpio.h>
 #include <nrfx_saadc.h>
@@ -60,8 +61,14 @@ void Battery::SaadcInit() {
 }
 
 void Battery::SaadcEventHandler(nrfx_saadc_evt_t const* p_event) {
-  const uint16_t battery_max = 4180; // maximum voltage of battery ( max charging voltage is 4.21 )
-  const uint16_t battery_min = 3200; // minimum voltage of battery before shutdown ( depends on the battery )
+  static const Utility::LinearApproximation<uint16_t, uint8_t, 6> aprox {{{
+    {3200, 0},  // minimum voltage of battery before shutdown ( depends on the battery )
+    {3600, 10}, // keen point corresponded to 10% of battery
+    {3700, 25},
+    {3750, 50},
+    {3900, 75},
+    {4180, 100} // maximum voltage of battery ( max charging voltage is 4.21 )
+  }}};
 
   if (p_event->type == NRFX_SAADC_EVT_DONE) {
 
@@ -73,14 +80,17 @@ void Battery::SaadcEventHandler(nrfx_saadc_evt_t const* p_event) {
     // reference_voltage is 600mV
     // p_event->data.done.p_buffer[0] = (adc_voltage / reference_voltage) * 1024
     voltage = p_event->data.done.p_buffer[0] * (8 * 600) / 1024;
+    if (firstMeasurement) {
+      filter.Reset(voltage);
+    } else {
+      voltage = filter.GetValue(voltage);
+    }
 
     uint8_t newPercent;
     if (isFull) {
       newPercent = 100;
-    } else if (voltage < battery_min) {
-      newPercent = 0;
     } else {
-      newPercent = std::min((voltage - battery_min) * 100 / (battery_max - battery_min), isCharging ? 99 : 100);
+      newPercent = std::min(aprox.GetValue(voltage), (isCharging ? uint8_t {99} : uint8_t {100}));
     }
 
     if ((isPowerPresent && newPercent > percentRemaining) || (!isPowerPresent && newPercent < percentRemaining) || firstMeasurement) {
