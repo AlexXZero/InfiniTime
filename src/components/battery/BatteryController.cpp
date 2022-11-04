@@ -73,6 +73,11 @@ void Battery::SaadcEventHandler(nrfx_saadc_evt_t const* p_event) {
     // reference_voltage is 600mV
     // p_event->data.done.p_buffer[0] = (adc_voltage / reference_voltage) * 1024
     voltage = p_event->data.done.p_buffer[0] * (8 * 600) / 1024;
+    if (firstMeasurement) {
+      filter.Reset(voltage);
+    } else {
+      voltage = filter.GetValue(voltage);
+    }
 
     uint8_t newPercent;
     if (isFull) {
