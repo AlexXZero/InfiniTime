@@ -841,6 +841,10 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   # add_definitions(-DMYNEWT_VAL_BLE_HS_LOG_LVL=0)
 endif()
 
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 add_subdirectory(displayapp/fonts)
 target_compile_options(infinitime_fonts PUBLIC
         $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:DEBUG>>: ${COMMON_FLAGS} -Og -g3>
@@ -924,6 +928,7 @@ set(NRF5_LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/gcc_nrf52.ld")
 add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_FILE_NAME})
 target_link_libraries(${EXECUTABLE_NAME} nimble nrf-sdk lvgl littlefs QCBOR infinitime_fonts)
+target_link_options(${EXECUTABLE_NAME} PUBLIC -Os -fno-fat-lto-objects -fuse-linker-plugin -Wl,-z,now)
 target_compile_options(${EXECUTABLE_NAME} PUBLIC
         $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:DEBUG>>: ${COMMON_FLAGS} -Wextra -Wformat -Wno-missing-field-initializers -Wno-unused-parameter -Og -g3>
         $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:RELEASE>>: ${COMMON_FLAGS} -Wextra -Wformat -Wno-missing-field-initializers -Wno-unused-parameter -Os>
@@ -957,6 +962,7 @@ set(DFU_MCUBOOT_FILE_NAME ${EXECUTABLE_MCUBOOT_NAME}-dfu-${pinetime_VERSION_MAJO
 set(NRF5_LINKER_SCRIPT_MCUBOOT "${CMAKE_SOURCE_DIR}/gcc_nrf52-mcuboot.ld")
 add_executable(${EXECUTABLE_MCUBOOT_NAME} ${SOURCE_FILES})
 target_link_libraries(${EXECUTABLE_MCUBOOT_NAME} nimble nrf-sdk lvgl littlefs QCBOR infinitime_fonts)
+target_link_options(${EXECUTABLE_MCUBOOT_NAME} PUBLIC -Os -fno-fat-lto-objects -fuse-linker-plugin -Wl,-z,now)
 set_target_properties(${EXECUTABLE_MCUBOOT_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_MCUBOOT_FILE_NAME})
 target_compile_options(${EXECUTABLE_MCUBOOT_NAME} PUBLIC
         $<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:DEBUG>>: ${COMMON_FLAGS} -Og -g3>
@@ -1029,6 +1035,7 @@ set(IMAGE_RECOVERY_MCUBOOT_FILE_NAME_HEX ${IMAGE_RECOVERY_MCUBOOT_FILE_NAME}.hex
 set(DFU_RECOVERY_MCUBOOT_FILE_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_NAME}-dfu-${pinetime_VERSION_MAJOR}.${pinetime_VERSION_MINOR}.${pinetime_VERSION_PATCH}.zip)
 add_executable(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} ${RECOVERY_SOURCE_FILES})
 target_link_libraries(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} nimble nrf-sdk littlefs QCBOR infinitime_fonts)
+target_link_options(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} PUBLIC -Os -fno-fat-lto-objects -fuse-linker-plugin -Wl,-z,now)
 set_target_properties(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} PROPERTIES OUTPUT_NAME ${EXECUTABLE_RECOVERY_MCUBOOT_FILE_NAME})
 target_compile_definitions(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} PUBLIC "PINETIME_IS_RECOVERY")
 target_compile_options(${EXECUTABLE_RECOVERY_MCUBOOT_NAME} PUBLIC
