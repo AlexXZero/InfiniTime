@@ -9,7 +9,7 @@
  * 0x00008020: Application (463+ kB)
  * 0x0007be50: MCUBoot image trailer (432 bytes)
  * 0x0007c000: MCUBoot Scratch partition (4 kB)
- * 0x0007d000: unused (12 kB)
+ * 0x0007d000: Eventlog (12 kB)
  *
  * SPI flash:
  * 0x00000000: Bootloader Assets, like Boot Graphic (256 kB)
@@ -33,7 +33,7 @@ MEMORY
   /* MCUBOOT (r) : ORIGIN = 0x0, LENGTH = MCUBOOT_SIZE */
   FLASH (rx) : ORIGIN = APP_OFFSET, LENGTH = APP_SIZE
   /* SCRATCH (r) : ORIGIN = SCRATCH_OFFSET, LENGTH = SCRATCH_SIZE */
-  SPARE_SPACE (r) : ORIGIN = SCRATCH_OFFSET + SCRATCH_SIZE, LENGTH = 12K
+  /* EVENTLOG (r) : ORIGIN = SCRATCH_OFFSET + SCRATCH_SIZE, LENGTH = 12K */
   RAM (rwx) :  ORIGIN = 0x20000000, LENGTH = 64K
 }
 

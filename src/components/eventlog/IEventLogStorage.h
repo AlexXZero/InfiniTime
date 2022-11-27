@@ -14,14 +14,14 @@ namespace Pinetime {
        * This amount should be a static value, i.e. it shouldn't be changed
        * during running application.
        */
-      virtual constexpr size_t PagesAmount() const = 0;
+      virtual size_t PagesAmount() const = 0;
 
       /*
        * Returns amount of words for storing event log (including reserved area).
        * All pages should have the same size and it should be a static value,
        * i.e. it shouldn't be changed during running application.
        */
-      virtual constexpr size_t PageSize() const = 0;
+      virtual size_t PageSize() const = 0;
 
       /*
        * Erase requested page. Erased page should contains 0xff bytes.

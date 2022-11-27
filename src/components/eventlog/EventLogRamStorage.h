@@ -6,17 +6,17 @@
 
 namespace Pinetime {
   namespace Components {
-    class EventLogRamStorage: public IEventLogStorage {
+    template <size_t PAGE_SIZE, size_t PAGES_AMOUNT> class EventLogRamStorage: public IEventLogStorage {
     public:
       EventLogRamStorage() {
         memset(pages, 0xff, sizeof(pages));
       }
 
-      virtual constexpr size_t PagesAmount() const {
+      virtual size_t PagesAmount() const {
         return PAGES_AMOUNT;
       }
 
-      virtual constexpr size_t PageSize() const {
+      virtual size_t PageSize() const {
         return PAGE_SIZE;
       }
 
@@ -33,8 +33,6 @@ namespace Pinetime {
       }
 
     private:
-      static constexpr size_t PAGE_SIZE = 0x100;
-      static constexpr size_t PAGES_AMOUNT = 3;
       struct {
         uint32_t words[PAGE_SIZE];
       } pages[PAGES_AMOUNT];

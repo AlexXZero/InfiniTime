@@ -35,7 +35,7 @@ void Console::Process() {
   static std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> prev_time;
   auto cur_time = eventlog.dateTimeController.CurrentDateTime();
   if (std::chrono::duration_cast<std::chrono::milliseconds>(cur_time - prev_time).count() < 20) {
-    // avoid smaping
+    // avoid spamming
     systemTask.PushMessage(Pinetime::System::Messages::ConsoleProcess);
     return;
   }
@@ -70,6 +70,7 @@ void Console::Received(const char* str, int length) {
 
   for (int i = 0; i < length; i++) {
     if (shell == Shell::Diagnostic) {
+      process_cmd = 0;
       switch (str[i]) {
       case 'V': // vibrate
         motorController.RunForDuration(100);
@@ -99,6 +100,9 @@ void Console::Received(const char* str, int length) {
       case 'B':
         systemTask.PushMessage(Pinetime::System::Messages::MeasureBatteryTimerExpired);
         Print("B:\r\n");
+        break;
+      case 'P':
+        eventlog.EraseAll();
         break;
       default:
         shell = Shell::None;
