@@ -14,7 +14,7 @@
 
 #include "systemtask/SystemMonitor.h"
 #include "components/eventlog/EventLog.h"
-#include "components/eventlog/EventLogRamStorage.h"
+#include "components/eventlog/EventLogInternalFlashStorage.h"
 #include "components/ble/NimbleController.h"
 #include "components/ble/NotificationManager.h"
 #include "components/motor/MotorController.h"
@@ -127,7 +127,8 @@ namespace Pinetime {
       Pinetime::Controllers::FS& fs;
       Pinetime::Controllers::TouchHandler& touchHandler;
       Pinetime::Controllers::ButtonHandler& buttonHandler;
-      Pinetime::Components::EventLogRamStorage eventlogStorage;
+      //Pinetime::Components::EventLogRamStorage<100, 5> eventlogStorage;
+      Pinetime::Components::EventLogInternalFlashStorage eventlogStorage;
       Pinetime::Components::EventLog eventlog;
       Pinetime::Controllers::NimbleController nimbleController;
 

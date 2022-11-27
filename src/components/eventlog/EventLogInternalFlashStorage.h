@@ -1,31 +1,26 @@
 #pragma once
 
-#include <cstring>  // for memset()
 #include "IEventLogStorage.h"
-
+#include "drivers/InternalFlash.h"
 
 namespace Pinetime {
   namespace Components {
-    template <size_t PAGE_SIZE, size_t PAGES_AMOUNT> class EventLogRamStorage: public IEventLogStorage {
+    class EventLogInternalFlashStorage: public IEventLogStorage {
     public:
-      EventLogRamStorage() {
-        memset(pages, 0xff, sizeof(pages));
-      }
-
       virtual constexpr size_t PagesAmount() const {
         return PAGES_AMOUNT;
       }
 
       virtual constexpr size_t PageSize() const {
-        return PAGE_SIZE;
+        return WORDS_PER_PAGE;
       }
 
       virtual void Erase(size_t page) {
-        memset(&pages[page], 0xff, sizeof(pages[page]));
+        Drivers::InternalFlash::ErasePage((uintptr_t)&pages[page]);
       }
 
       virtual void Write(size_t page, size_t wordOffset, uint32_t wordValue) {
-        pages[page].words[wordOffset] &= wordValue;
+        Drivers::InternalFlash::WriteWord((uintptr_t)&pages[page].words[wordOffset], wordValue);
       }
 
       virtual uint32_t Read(size_t page, size_t wordOffset) const {
@@ -33,9 +28,12 @@ namespace Pinetime {
       }
 
     private:
+      static constexpr size_t WORDS_PER_PAGE = 0x400;
+      static constexpr size_t PAGES_AMOUNT = 3;
+      static constexpr uint32_t FLASH_OFFSET = 0x7d000;
       struct {
-        uint32_t words[PAGE_SIZE];
-      } pages[PAGES_AMOUNT];
+        uint32_t words[WORDS_PER_PAGE];
+      } *pages = (decltype(pages))FLASH_OFFSET;
     };
   }
 }
