@@ -9,6 +9,8 @@ RUN apt-get update -qq \
       cmake \
       git \
       make \
+      clang-tidy \
+      clang-format \
       python3 \
       python3-pip \
       python-is-python3 \
