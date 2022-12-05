@@ -468,6 +468,7 @@ list(APPEND SOURCE_FILES
         components/ble/ServiceDiscovery.cpp
         components/ble/HeartRateService.cpp
         components/ble/MotionService.cpp
+        components/utility/Timer.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/motor/MotorController.cpp
         components/settings/Settings.cpp
@@ -538,6 +539,7 @@ list(APPEND RECOVERY_SOURCE_FILES
         components/ble/NavigationService.cpp
         components/ble/HeartRateService.cpp
         components/ble/MotionService.cpp
+        components/utility/Timer.cpp
         components/firmwarevalidator/FirmwareValidator.cpp
         components/settings/Settings.cpp
         components/timer/TimerController.cpp
@@ -581,6 +583,7 @@ list(APPEND RECOVERYLOADER_SOURCE_FILES
         components/gfx/Gfx.cpp
         drivers/St7789.cpp
         components/brightness/BrightnessController.cpp
+        components/utility/Timer.cpp
 
         recoveryLoader.cpp
         )

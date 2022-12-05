@@ -22,6 +22,7 @@
 #include "components/alarm/AlarmController.h"
 #include "components/fs/FS.h"
 #include "components/console/Console.h"
+#include "components/utility/Timer.h"
 #include "touchhandler/TouchHandler.h"
 #include "buttonhandler/ButtonHandler.h"
 #include "buttonhandler/ButtonActions.h"
