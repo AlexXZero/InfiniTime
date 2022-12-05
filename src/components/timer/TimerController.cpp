@@ -3,35 +3,34 @@
 
 using namespace Pinetime::Controllers;
 
-void TimerCallback(TimerHandle_t xTimer) {
-  auto* controller = static_cast<TimerController*>(pvTimerGetTimerID(xTimer));
-  controller->OnTimerEnd();
+TimerController::TimerController()
+  : timer {1, Components::Timer::Mode::SingleShot, [this] {
+             OnTimerEnd();
+           }} {
 }
 
 void TimerController::Init(Pinetime::System::SystemTask* systemTask) {
   this->systemTask = systemTask;
-  timer = xTimerCreate("Timer", 1, pdFALSE, this, TimerCallback);
 }
 
 void TimerController::StartTimer(uint32_t duration) {
-  xTimerChangePeriod(timer, pdMS_TO_TICKS(duration), 0);
-  xTimerStart(timer, 0);
+  timer.Start(pdMS_TO_TICKS(duration));
 }
 
 uint32_t TimerController::GetTimeRemaining() {
-  if (IsRunning()) {
-    TickType_t remainingTime = xTimerGetExpiryTime(timer) - xTaskGetTickCount();
+  if (timer.IsActive()) {
+    auto remainingTime = timer.GetExpiryTime() - xTaskGetTickCount();
     return (remainingTime * 1000 / configTICK_RATE_HZ);
   }
   return 0;
 }
 
 void TimerController::StopTimer() {
-  xTimerStop(timer, 0);
+  timer.Stop();
 }
 
 bool TimerController::IsRunning() {
-  return (xTimerIsTimerActive(timer) == pdTRUE);
+  return timer.IsActive();
 }
 
 void TimerController::OnTimerEnd() {

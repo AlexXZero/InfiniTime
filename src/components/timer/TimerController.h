@@ -1,7 +1,6 @@
 #pragma once
 
-#include <FreeRTOS.h>
-#include <timers.h>
+#include "components/utility/Timer.h"
 
 namespace Pinetime {
   namespace System {
@@ -11,7 +10,7 @@ namespace Pinetime {
 
     class TimerController {
     public:
-      TimerController() = default;
+      TimerController();
 
       void Init(System::SystemTask* systemTask);
 
@@ -27,7 +26,7 @@ namespace Pinetime {
 
     private:
       System::SystemTask* systemTask = nullptr;
-      TimerHandle_t timer;
+      Components::Timer timer;
     };
   }
 }
