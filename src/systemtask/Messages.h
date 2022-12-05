@@ -28,7 +28,6 @@ namespace Pinetime {
       OnPairing,
       SetOffAlarm,
       StopRinging,
-      MeasureBatteryTimerExpired,
       BatteryPercentageUpdated,
       StartFileTransfer,
       StopFileTransfer,

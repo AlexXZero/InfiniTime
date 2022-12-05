@@ -28,25 +28,6 @@ namespace {
   }
 }
 
-void DimTimerCallback(TimerHandle_t xTimer) {
-
-  NRF_LOG_INFO("DimTimerCallback");
-  auto sysTask = static_cast<SystemTask*>(pvTimerGetTimerID(xTimer));
-  sysTask->OnDim();
-}
-
-void IdleTimerCallback(TimerHandle_t xTimer) {
-
-  NRF_LOG_INFO("IdleTimerCallback");
-  auto sysTask = static_cast<SystemTask*>(pvTimerGetTimerID(xTimer));
-  sysTask->OnIdle();
-}
-
-void MeasureBatteryTimerCallback(TimerHandle_t xTimer) {
-  auto* sysTask = static_cast<SystemTask*>(pvTimerGetTimerID(xTimer));
-  sysTask->PushMessage(Pinetime::System::Messages::MeasureBatteryTimerExpired);
-}
-
 SystemTask::SystemTask(Drivers::SpiMaster& spi,
                        Drivers::St7789& lcd,
                        Pinetime::Drivers::SpiNorFlash& spiNorFlash,
@@ -105,7 +86,20 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                      heartRateController,
                      motionController,
                      fs),
-    console(*this, nimbleController, motorController, eventlog) {
+    console(*this, nimbleController, motorController, eventlog),
+    dimTimer {0,
+              Timer::Mode::SingleShot,
+              [this] {
+                OnDim();
+              }},
+    idleTimer {pdMS_TO_TICKS(2000),
+               Timer::Mode::SingleShot,
+               [this] {
+                 OnIdle();
+               }},
+    measureBatteryTimer {batteryMeasurementPeriod, Timer::Mode::Repeated, [&batteryController] {
+                           batteryController.MeasureVoltage();
+                         }} {
 }
 
 void SystemTask::Start() {
@@ -201,11 +195,8 @@ void SystemTask::Work() {
 
   batteryController.MeasureVoltage();
 
-  idleTimer = xTimerCreate("idleTimer", pdMS_TO_TICKS(2000), pdFALSE, this, IdleTimerCallback);
-  dimTimer = xTimerCreate("dimTimer", pdMS_TO_TICKS(settingsController.GetScreenTimeOut() - 2000), pdFALSE, this, DimTimerCallback);
-  measureBatteryTimer = xTimerCreate("measureBattery", batteryMeasurementPeriod, pdTRUE, this, MeasureBatteryTimerCallback);
-  xTimerStart(dimTimer, 0);
-  xTimerStart(measureBatteryTimer, portMAX_DELAY);
+  dimTimer.Start(pdMS_TO_TICKS(settingsController.GetScreenTimeOut() - 2000));
+  measureBatteryTimer.Start();
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
@@ -228,7 +219,7 @@ void SystemTask::Work() {
           doNotGoToSleep = true;
           break;
         case Messages::UpdateTimeOut:
-          xTimerChangePeriod(dimTimer, pdMS_TO_TICKS(settingsController.GetScreenTimeOut() - 2000), 0);
+          dimTimer.ChangePeriod(pdMS_TO_TICKS(settingsController.GetScreenTimeOut() - 2000));
           break;
         case Messages::GoToRunning:
           spi.Wakeup();
@@ -238,7 +229,7 @@ void SystemTask::Work() {
             touchPanel.Wakeup();
           }
 
-          xTimerStart(dimTimer, 0);
+          dimTimer.Start();
           spiNorFlash.Wakeup();
           lcd.Wakeup();
 
@@ -272,8 +263,8 @@ void SystemTask::Work() {
           }
           state = SystemTaskState::GoingToSleep; // Already set in PushMessage()
           NRF_LOG_INFO("[systemtask] Going to sleep");
-          xTimerStop(idleTimer, 0);
-          xTimerStop(dimTimer, 0);
+          idleTimer.Stop();
+          dimTimer.Stop();
           displayApp.PushMessage(Pinetime::Applications::Display::Messages::GoToSleep);
           heartRateApp.PushMessage(Pinetime::Applications::HeartRateTask::Messages::GoToSleep);
           break;
@@ -332,7 +323,7 @@ void SystemTask::Work() {
             NVIC_SystemReset();
           }
           doNotGoToSleep = false;
-          xTimerStart(dimTimer, 0);
+          dimTimer.Start();
           break;
         case Messages::StartFileTransfer:
           NRF_LOG_INFO("[systemtask] FS Started");
@@ -345,7 +336,7 @@ void SystemTask::Work() {
         case Messages::StopFileTransfer:
           NRF_LOG_INFO("[systemtask] FS Stopped");
           doNotGoToSleep = false;
-          xTimerStart(dimTimer, 0);
+          dimTimer.Start();
           // TODO add intent of fs access icon or something
           break;
         case Messages::OnTouchEvent:
@@ -429,9 +420,6 @@ void SystemTask::Work() {
           if (state == SystemTaskState::Sleeping) {
             GoToRunning();
           }
-          break;
-        case Messages::MeasureBatteryTimerExpired:
-          batteryController.MeasureVoltage();
           break;
         case Messages::BatteryPercentageUpdated:
           eventlog.Write<Event::Event16>(Event16Event::VccData, batteryController.Voltage());
@@ -588,7 +576,7 @@ void SystemTask::OnDim() {
   }
   NRF_LOG_INFO("Dim timeout -> Dim screen")
   displayApp.PushMessage(Pinetime::Applications::Display::Messages::DimScreen);
-  xTimerStart(idleTimer, 0);
+  idleTimer.Start();
   isDimmed = true;
 }
 
@@ -608,6 +596,6 @@ void SystemTask::ReloadIdleTimer() {
     displayApp.PushMessage(Pinetime::Applications::Display::Messages::RestoreBrightness);
     isDimmed = false;
   }
-  xTimerReset(dimTimer, 0);
-  xTimerStop(idleTimer, 0);
+  dimTimer.Reset();
+  idleTimer.Stop();
 }

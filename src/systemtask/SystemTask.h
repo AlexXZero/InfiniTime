@@ -5,7 +5,6 @@
 #include <FreeRTOS.h>
 #include <queue.h>
 #include <task.h>
-#include <timers.h>
 #include <heartratetask/HeartRateTask.h>
 #include <components/settings/Settings.h>
 #include <drivers/Bma421.h>
@@ -139,9 +138,9 @@ namespace Pinetime {
       void ReloadIdleTimer();
       bool isBleDiscoveryTimerRunning = false;
       uint8_t bleDiscoveryTimer = 0;
-      TimerHandle_t dimTimer;
-      TimerHandle_t idleTimer;
-      TimerHandle_t measureBatteryTimer;
+      Components::Timer dimTimer;
+      Components::Timer idleTimer;
+      Components::Timer measureBatteryTimer;
       bool doNotGoToSleep = false;
       bool isDimmed = false;
       SystemTaskState state = SystemTaskState::Running;

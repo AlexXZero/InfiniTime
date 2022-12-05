@@ -97,10 +97,6 @@ void Console::Received(const char* str, int length) {
         eventlog.SwapPages();
         Print("T:\r\n");
         break;
-      case 'B':
-        systemTask.PushMessage(Pinetime::System::Messages::MeasureBatteryTimerExpired);
-        Print("B:\r\n");
-        break;
       case 'P':
         eventlog.EraseAll();
         break;
