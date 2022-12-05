@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <array>
+#include "components/utility/Timer.h"
 
 #define min // workaround: nimble's min/max macros conflict with libstdc++
 #define max
@@ -36,7 +37,7 @@ namespace Pinetime {
         void Send(uint16_t connection, uint16_t characteristicHandle, const uint8_t* data, const size_t s);
 
       private:
-        TimerHandle_t timer;
+        Components::Timer timer;
         uint16_t connectionHandle = 0;
         uint16_t characteristicHandle = 0;
         size_t size = 0;
@@ -152,7 +153,7 @@ namespace Pinetime {
       int WritePacketHandler(uint16_t connectionHandle, os_mbuf* om);
       int ControlPointHandler(uint16_t connectionHandle, os_mbuf* om);
 
-      TimerHandle_t timeoutTimer;
+      Components::Timer timeoutTimer;
     };
   }
 }

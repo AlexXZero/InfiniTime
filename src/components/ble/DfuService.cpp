@@ -17,16 +17,6 @@ int DfuServiceCallback(uint16_t conn_handle, uint16_t attr_handle, struct ble_ga
   return dfuService->OnServiceData(conn_handle, attr_handle, ctxt);
 }
 
-void NotificationTimerCallback(TimerHandle_t xTimer) {
-  auto notificationManager = static_cast<DfuService::NotificationManager*>(pvTimerGetTimerID(xTimer));
-  notificationManager->OnNotificationTimer();
-}
-
-void TimeoutTimerCallback(TimerHandle_t xTimer) {
-  auto dfuService = static_cast<DfuService*>(pvTimerGetTimerID(xTimer));
-  dfuService->OnTimeout();
-}
-
 DfuService::DfuService(Pinetime::System::SystemTask& systemTask,
                        Pinetime::Controllers::Ble& bleController,
                        Pinetime::Drivers::SpiNorFlash& spiNorFlash)
@@ -64,8 +54,10 @@ DfuService::DfuService(Pinetime::System::SystemTask& systemTask,
        .uuid = &serviceUuid.u,
        .characteristics = characteristicDefinition},
       {0},
-    } {
-  timeoutTimer = xTimerCreate("notificationTimer", 10000, pdFALSE, this, TimeoutTimerCallback);
+    },
+    timeoutTimer {10000, Components::Timer::Mode::SingleShot, [this] {
+                    OnTimeout();
+                  }} {
 }
 
 void DfuService::Init() {
@@ -79,7 +71,7 @@ void DfuService::Init() {
 
 int DfuService::OnServiceData(uint16_t connectionHandle, uint16_t attributeHandle, ble_gatt_access_ctxt* context) {
   if (bleController.IsFirmwareUpdating()) {
-    xTimerStart(timeoutTimer, 0);
+    timeoutTimer.Start();
   }
 
   ble_gatts_find_chr(&serviceUuid.u, &packetCharacteristicUuid.u, nullptr, &packetCharacteristicHandle);
@@ -314,8 +306,10 @@ void DfuService::Reset() {
   systemTask.PushMessage(Pinetime::System::Messages::BleFirmwareUpdateFinished);
 }
 
-DfuService::NotificationManager::NotificationManager() {
-  timer = xTimerCreate("notificationTimer", 1000, pdFALSE, this, NotificationTimerCallback);
+DfuService::NotificationManager::NotificationManager()
+  : timer {1000, Components::Timer::Mode::SingleShot, [this] {
+             OnNotificationTimer();
+           }} {
 }
 
 bool DfuService::NotificationManager::AsyncSend(uint16_t connection, uint16_t charactHandle, uint8_t* data, size_t s) {
@@ -326,7 +320,7 @@ bool DfuService::NotificationManager::AsyncSend(uint16_t connection, uint16_t ch
   characteristicHandle = charactHandle;
   size = s;
   std::memcpy(buffer, data, size);
-  xTimerStart(timer, 0);
+  timer.Start();
   return true;
 }
 
@@ -347,7 +341,7 @@ void DfuService::NotificationManager::Reset() {
   connectionHandle = 0;
   characteristicHandle = 0;
   size = 0;
-  xTimerStop(timer, 0);
+  timer.Stop();
 }
 
 void DfuService::DfuImage::Init(size_t chunkSize, size_t totalSize, uint16_t expectedCrc) {
