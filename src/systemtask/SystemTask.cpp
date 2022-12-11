@@ -211,7 +211,6 @@ void SystemTask::Work() {
 #pragma ide diagnostic ignored "EndlessLoop"
   while (true) {
     UpdateMotion();
-    Timer::Process();
 
     uint8_t msg;
     if (xQueueReceive(systemTasksMsgQueue, &msg, 100)) {

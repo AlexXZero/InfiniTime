@@ -37,6 +37,7 @@
 #include "components/datetime/DateTimeController.h"
 #include "components/heartrate/HeartRateController.h"
 #include "components/fs/FS.h"
+#include "components/utility/Timer.h"
 #include "drivers/Spi.h"
 #include "drivers/SpiMaster.h"
 #include "drivers/SpiNorFlash.h"
@@ -307,6 +308,11 @@ void calibrate_lf_clock_rc(nrf_drv_clock_evt_type_t event) {
   nrf_drv_clock_calibration_start(16, calibrate_lf_clock_rc);
 }
 
+static TimerHandle_t timerTaskTimer;
+static void TimersCallback(void*){
+  Pinetime::Components::Timer::Process();
+}
+
 int main(void) {
   logger.Init();
 
@@ -358,6 +364,9 @@ int main(void) {
   systemTask.Start();
 
   nimble_port_init();
+
+  timerTaskTimer = xTimerCreate("Timers", 10, pdTRUE, nullptr, TimersCallback);
+  xTimerStart(timerTaskTimer, 0);
 
   vTaskStartScheduler();
 

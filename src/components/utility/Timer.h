@@ -6,12 +6,12 @@
 namespace Pinetime {
   namespace Components {
     class Timer {
+    public:
       using tick_t = uint32_t;
       using tick_diff_t = int32_t;
-
-    public:
       enum class Mode : uint8_t { SingleShot, Repeated };
 
+      Timer() = default;
       Timer(tick_t period, Mode mode, const std::function<void()>&& callback)
         : callback {callback}, mode {mode}, is_active(false), period {period}, start {0}, p_next {nullptr} {
       }
@@ -36,7 +36,6 @@ namespace Pinetime {
         Stop();
         Start(newPeriod);
       }
-      void Advance();
       void ChangePeriod(tick_t newPeriod);
       bool IsActive() const {
         return is_active;

@@ -2,23 +2,40 @@
 #include <hal/nrf_rtc.h> // for nrf_rtc_counter_get
 #include <FreeRTOS.h>    // for portNRF_RTC_REG
 
+class IRQ_Guard {
+public:
+  inline IRQ_Guard() {
+    Enable();
+  }
+  inline ~IRQ_Guard() {
+    Disable();
+  }
+  inline void Enable() {
+    ctx = __get_PRIMASK();
+    __disable_irq();
+  }
+  inline void Disable() {
+    if ((ctx & 0x01) == 0) {
+      __enable_irq();
+    }
+  }
+private:
+  uint32_t ctx;
+};
+
 using namespace Pinetime::Components;
 
 Timer* Timer::p_active_timers = nullptr;
 
 void Timer::Start() {
+  IRQ_Guard guard;
   start = nrf_rtc_counter_get(portNRF_RTC_REG);
   add_to_list();
 }
 
 void Timer::Stop() {
+  IRQ_Guard guard;
   remove_from_list();
-}
-
-void Timer::Advance() {
-  remove_from_list();
-  start += period;
-  add_to_list();
 }
 
 void Timer::ChangePeriod(tick_t newPeriod) {
@@ -27,8 +44,8 @@ void Timer::ChangePeriod(tick_t newPeriod) {
 }
 
 void Timer::Process() {
-  // TODO: disable IRQ
   tick_t now = nrf_rtc_counter_get(portNRF_RTC_REG);
+  IRQ_Guard guard;
 
   while (p_active_timers != nullptr) {
     if (GetTimeDiff(now, p_active_timers->GetExpiryTime()) > 0) {
@@ -42,18 +59,17 @@ void Timer::Process() {
       p_timer->start += p_timer->period;
       p_timer->add_to_list();
     }
-    p_timer->callback();
-  }
 
-  // TODO: restore IRQ
+    guard.Disable();
+    p_timer->callback();
+    guard.Enable();
+  }
 }
 
 /*
  * Add the timer to the active timers. The next timer due is in front.
  */
 void Timer::add_to_list() {
-  // TODO: disable IRQ
-
   Timer** p_timer = &p_active_timers;
   while (*p_timer != nullptr) {
     if (GetTimeDiff(GetExpiryTime(), (*p_timer)->GetExpiryTime()) > 0) {
@@ -66,16 +82,12 @@ void Timer::add_to_list() {
   p_next = *p_timer;
   *p_timer = this;
   is_active = true;
-
-  // TODO: restore IRQ
 }
 
 /*
  * Deactivate a timer and remove it from the timers queue.
  */
 void Timer::remove_from_list() {
-  // TODO: disable IRQ
-
   for (Timer** p = &p_active_timers; *p != nullptr; p = &(*p)->p_next) {
     if (*p == this) {
       *p = p_next;
@@ -83,6 +95,4 @@ void Timer::remove_from_list() {
       break;
     }
   }
-
-  // TODO: restore IRQ
 }
