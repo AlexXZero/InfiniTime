@@ -52,7 +52,8 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                        Pinetime::Controllers::FS& fs,
                        Pinetime::Controllers::TouchHandler& touchHandler,
                        Pinetime::Controllers::ButtonHandler& buttonHandler)
-  : spi {spi},
+  : Components::Task<Messages, 10> {100},
+    spi {spi},
     lcd {lcd},
     spiNorFlash {spiNorFlash},
     twiMaster {twiMaster},
@@ -103,19 +104,6 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
 }
 
 void SystemTask::Start() {
-  systemTasksMsgQueue = xQueueCreate(10, 1);
-  if (pdPASS != xTaskCreate(SystemTask::Process, "MAIN", 350, this, 1, &taskHandle)) {
-    APP_ERROR_HANDLER(NRF_ERROR_NO_MEM);
-  }
-}
-
-void SystemTask::Process(void* instance) {
-  auto* app = static_cast<SystemTask*>(instance);
-  NRF_LOG_INFO("systemtask task started!");
-  app->Work();
-}
-
-void SystemTask::Work() {
   BootErrors bootError = BootErrors::None;
 
   watchdog.Setup(7);
@@ -198,14 +186,34 @@ void SystemTask::Work() {
   dimTimer.Start(pdMS_TO_TICKS(settingsController.GetScreenTimeOut() - 2000));
   measureBatteryTimer.Start();
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "EndlessLoop"
-  while (true) {
+  Components::Task<Messages, 10>::Start();
+}
+
+void SystemTask::Process() {
     UpdateMotion();
 
-    uint8_t msg;
-    if (xQueueReceive(systemTasksMsgQueue, &msg, 100)) {
-      Messages message = static_cast<Messages>(msg);
+    if (isBleDiscoveryTimerRunning) {
+      if (bleDiscoveryTimer == 0) {
+        isBleDiscoveryTimerRunning = false;
+        // Services discovery is deferred from 3 seconds to avoid the conflicts between the host communicating with the
+        // target and vice-versa. I'm not sure if this is the right way to handle this...
+        nimbleController.StartDiscovery();
+      } else {
+        bleDiscoveryTimer--;
+      }
+    }
+
+    monitor.Process();
+    uint32_t systick_counter = nrf_rtc_counter_get(portNRF_RTC_REG);
+    dateTimeController.UpdateTime(systick_counter);
+    NoInit_BackUpTime = dateTimeController.CurrentDateTime();
+    if (!nrf_gpio_pin_read(PinMap::Button)) {
+      watchdog.Kick();
+    }
+}
+
+void SystemTask::Process(Messages message)
+{
       switch (message) {
         case Messages::EnableSleeping:
           // Make sure that exiting an app doesn't enable sleeping,
@@ -442,34 +450,9 @@ void SystemTask::Work() {
             nimbleController.DisableRadio();
           }
           break;
-        case Messages::ConsoleProcess:
-          console.Process();
-          break;
         default:
           break;
       }
-    }
-
-    if (isBleDiscoveryTimerRunning) {
-      if (bleDiscoveryTimer == 0) {
-        isBleDiscoveryTimerRunning = false;
-        // Services discovery is deferred from 3 seconds to avoid the conflicts between the host communicating with the
-        // target and vice-versa. I'm not sure if this is the right way to handle this...
-        nimbleController.StartDiscovery();
-      } else {
-        bleDiscoveryTimer--;
-      }
-    }
-
-    monitor.Process();
-    uint32_t systick_counter = nrf_rtc_counter_get(portNRF_RTC_REG);
-    dateTimeController.UpdateTime(systick_counter);
-    NoInit_BackUpTime = dateTimeController.CurrentDateTime();
-    if (!nrf_gpio_pin_read(PinMap::Button)) {
-      watchdog.Kick();
-    }
-  }
-#pragma clang diagnostic pop
 }
 
 void SystemTask::UpdateMotion() {
@@ -549,24 +532,6 @@ void SystemTask::OnTouchEvent() {
         settingsController.isWakeUpModeOn(Pinetime::Controllers::Settings::WakeUpMode::DoubleTap)) {
       PushMessage(Messages::TouchWakeUp);
     }
-  }
-}
-
-void SystemTask::PushMessage(System::Messages msg) {
-  if (msg == Messages::GoToSleep && !doNotGoToSleep) {
-    state = SystemTaskState::GoingToSleep;
-  }
-
-  if (in_isr()) {
-    BaseType_t xHigherPriorityTaskWoken;
-    xHigherPriorityTaskWoken = pdFALSE;
-    xQueueSendFromISR(systemTasksMsgQueue, &msg, &xHigherPriorityTaskWoken);
-    if (xHigherPriorityTaskWoken) {
-      /* Actual macro used here is port specific. */
-      portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
-  } else {
-    xQueueSend(systemTasksMsgQueue, &msg, portMAX_DELAY);
   }
 }
 

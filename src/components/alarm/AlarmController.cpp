@@ -23,19 +23,14 @@
 using namespace Pinetime::Controllers;
 using namespace std::chrono_literals;
 
-AlarmController::AlarmController(Controllers::DateTime& dateTimeController) : dateTimeController {dateTimeController} {
-}
-
-namespace {
-  void SetOffAlarm(TimerHandle_t xTimer) {
-    auto controller = static_cast<Pinetime::Controllers::AlarmController*>(pvTimerGetTimerID(xTimer));
-    controller->SetOffAlarmNow();
-  }
+AlarmController::AlarmController(Controllers::DateTime& dateTimeController)
+  : dateTimeController {dateTimeController}, alarmTimer {1, [this] {
+                                                           SetOffAlarmNow();
+                                                         }} {
 }
 
 void AlarmController::Init(System::SystemTask* systemTask) {
   this->systemTask = systemTask;
-  alarmTimer = xTimerCreate("Alarm", 1, pdFALSE, this, SetOffAlarm);
 }
 
 void AlarmController::SetAlarmTime(uint8_t alarmHr, uint8_t alarmMin) {
@@ -45,7 +40,7 @@ void AlarmController::SetAlarmTime(uint8_t alarmHr, uint8_t alarmMin) {
 
 void AlarmController::ScheduleAlarm() {
   // Determine the next time the alarm needs to go off and set the timer
-  xTimerStop(alarmTimer, 0);
+  alarmTimer.Stop();
 
   auto now = dateTimeController.CurrentDateTime();
   alarmTime = now;
@@ -76,8 +71,7 @@ void AlarmController::ScheduleAlarm() {
   // now can convert back to a time_point
   alarmTime = std::chrono::system_clock::from_time_t(std::mktime(tmAlarmTime));
   auto secondsToAlarm = std::chrono::duration_cast<std::chrono::seconds>(alarmTime - now).count();
-  xTimerChangePeriod(alarmTimer, secondsToAlarm * configTICK_RATE_HZ, 0);
-  xTimerStart(alarmTimer, 0);
+  alarmTimer.Start(secondsToAlarm * configTICK_RATE_HZ);
 
   state = AlarmState::Set;
 }
@@ -87,7 +81,7 @@ uint32_t AlarmController::SecondsToAlarm() const {
 }
 
 void AlarmController::DisableAlarm() {
-  xTimerStop(alarmTimer, 0);
+  alarmTimer.Stop();
   state = AlarmState::Not_Set;
 }
 

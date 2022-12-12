@@ -13,7 +13,8 @@ Console::Console(Pinetime::System::SystemTask& systemTask,
   : systemTask {systemTask},
     nimbleController {nimbleController},
     motorController {motorController},
-    eventlog {eventlog} {
+    eventlog {eventlog},
+    process_cmd_timer {pdMS_TO_TICKS(100), Timer::Mode::Repeated, [this]{Process();}} {
 }
 
 void Console::Init() {
@@ -32,15 +33,6 @@ static char process_cmd = 0;
 static EventLogIterator event;
 
 void Console::Process() {
-  static std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> prev_time;
-  auto cur_time = eventlog.dateTimeController.CurrentDateTime();
-  if (std::chrono::duration_cast<std::chrono::milliseconds>(cur_time - prev_time).count() < 20) {
-    // avoid spamming
-    systemTask.PushMessage(Pinetime::System::Messages::ConsoleProcess);
-    return;
-  }
-  prev_time = cur_time;
-
   switch (process_cmd) {
   case 'E':
     if (event == eventlog.end()) {
@@ -50,7 +42,6 @@ void Console::Process() {
       snprintf(buf, sizeof(buf), "E: %u,%08x\r\n", event.Index(), event.Value());
       Print(buf);
       ++event;
-      systemTask.PushMessage(Pinetime::System::Messages::ConsoleProcess);
       return;
     }
     break;
@@ -59,6 +50,7 @@ void Console::Process() {
     break;
   }
   process_cmd = 0;
+  process_cmd_timer.Stop();
 }
 
 void Console::Received(const char* str, int length) {
@@ -87,7 +79,7 @@ void Console::Received(const char* str, int length) {
       case 'E':
         process_cmd = str[i];
         event = eventlog.begin();
-        systemTask.PushMessage(Pinetime::System::Messages::ConsoleProcess);
+        process_cmd_timer.Start();
         break;
       case 'R':
         eventlog.Write<Event::Simple>(SimpleEvent::SoftwareReset);
@@ -97,6 +89,12 @@ void Console::Received(const char* str, int length) {
         eventlog.SwapPages();
         Print("T:\r\n");
         break;
+#if 0 // removed
+      case 'B':
+        systemTask.PushMessage(Pinetime::System::Messages::MeasureBatteryTimerExpired);
+        Print("B:\r\n");
+        break;
+#endif
       case 'P':
         eventlog.EraseAll();
         break;

@@ -8,7 +8,9 @@ void ButtonTimerCallback(TimerHandle_t xTimer) {
 }
 
 void ButtonHandler::Init(Pinetime::System::SystemTask* systemTask) {
-  buttonTimer = xTimerCreate("buttonTimer", pdMS_TO_TICKS(200), pdFALSE, systemTask, ButtonTimerCallback);
+  buttonTimer = Components::Timer {pdMS_TO_TICKS(200), [systemTask] {
+    systemTask->PushMessage(Pinetime::System::Messages::HandleButtonTimerEvent);
+  }};
 }
 
 ButtonActions ButtonHandler::HandleEvent(Events event) {
@@ -26,25 +28,22 @@ ButtonActions ButtonHandler::HandleEvent(Events event) {
   switch (state) {
     case States::Idle:
       if (event == Events::Press) {
-        xTimerChangePeriod(buttonTimer, doubleClickTime, 0);
-        xTimerStart(buttonTimer, 0);
+        buttonTimer.Start(doubleClickTime);
         state = States::Pressed;
       }
       break;
     case States::Pressed:
       if (event == Events::Press) {
         if (xTaskGetTickCount() - releaseTime < doubleClickTime) {
-          xTimerStop(buttonTimer, 0);
+          buttonTimer.Stop();
           state = States::Idle;
           return ButtonActions::DoubleClick;
         }
       } else if (event == Events::Release) {
-        xTimerChangePeriod(buttonTimer, doubleClickTime, 0);
-        xTimerStart(buttonTimer, 0);
+        buttonTimer.Start(doubleClickTime);
       } else if (event == Events::Timer) {
         if (buttonPressed) {
-          xTimerChangePeriod(buttonTimer, longPressTime - doubleClickTime, 0);
-          xTimerStart(buttonTimer, 0);
+          buttonTimer.Start(longPressTime - doubleClickTime);
           state = States::Holding;
         } else {
           state = States::Idle;
@@ -54,19 +53,18 @@ ButtonActions ButtonHandler::HandleEvent(Events event) {
       break;
     case States::Holding:
       if (event == Events::Release) {
-        xTimerStop(buttonTimer, 0);
+        buttonTimer.Stop();
         state = States::Idle;
         return ButtonActions::Click;
       } else if (event == Events::Timer) {
-        xTimerChangePeriod(buttonTimer, longerPressTime - longPressTime - doubleClickTime, 0);
-        xTimerStart(buttonTimer, 0);
+        buttonTimer.Start(longerPressTime - longPressTime - doubleClickTime);
         state = States::LongHeld;
         return ButtonActions::LongPress;
       }
       break;
     case States::LongHeld:
       if (event == Events::Release) {
-        xTimerStop(buttonTimer, 0);
+        buttonTimer.Stop();
         state = States::Idle;
       } else if (event == Events::Timer) {
         state = States::Idle;

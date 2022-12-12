@@ -2,9 +2,6 @@
 
 #include <memory>
 
-#include <FreeRTOS.h>
-#include <queue.h>
-#include <task.h>
 #include <heartratetask/HeartRateTask.h>
 #include <components/settings/Settings.h>
 #include <drivers/Bma421.h>
@@ -21,6 +18,7 @@
 #include "components/alarm/AlarmController.h"
 #include "components/fs/FS.h"
 #include "components/console/Console.h"
+#include "components/utility/Task.h"
 #include "touchhandler/TouchHandler.h"
 #include "buttonhandler/ButtonHandler.h"
 #include "buttonhandler/ButtonActions.h"
@@ -53,7 +51,7 @@ namespace Pinetime {
     class ButtonHandler;
   }
   namespace System {
-    class SystemTask {
+    class SystemTask : public Components::Task <Messages, 10> {
     public:
       enum class SystemTaskState { Sleeping, Running, GoingToSleep, WakingUp };
       SystemTask(Drivers::SpiMaster& spi,
@@ -82,7 +80,6 @@ namespace Pinetime {
                  Pinetime::Controllers::ButtonHandler& buttonHandler);
 
       void Start();
-      void PushMessage(Messages msg);
 
       void OnTouchEvent();
 
@@ -98,8 +95,6 @@ namespace Pinetime {
       }
 
     private:
-      TaskHandle_t taskHandle;
-
       Pinetime::Drivers::SpiMaster& spi;
       Pinetime::Drivers::St7789& lcd;
       Pinetime::Drivers::SpiNorFlash& spiNorFlash;
@@ -112,7 +107,6 @@ namespace Pinetime {
       Pinetime::Controllers::DateTime& dateTimeController;
       Pinetime::Controllers::TimerController& timerController;
       Pinetime::Controllers::AlarmController& alarmController;
-      QueueHandle_t systemTasksMsgQueue;
       Pinetime::Drivers::Watchdog& watchdog;
       Pinetime::Controllers::NotificationManager& notificationManager;
       Pinetime::Controllers::MotorController& motorController;
@@ -133,8 +127,8 @@ namespace Pinetime {
       Pinetime::Controllers::NimbleController nimbleController;
       Pinetime::Components::Console console;
 
-      static void Process(void* instance);
-      void Work();
+      void Process();
+      void Process(Messages msg);
       void ReloadIdleTimer();
       bool isBleDiscoveryTimerRunning = false;
       uint8_t bleDiscoveryTimer = 0;

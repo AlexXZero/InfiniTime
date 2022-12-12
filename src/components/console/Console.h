@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <string>
+#include "components/utility/Timer.h"
 
 namespace Pinetime {
 
@@ -35,6 +36,7 @@ namespace Pinetime {
       Pinetime::Controllers::NimbleController& nimbleController;
       Pinetime::Controllers::MotorController& motorController;
       Pinetime::Components::EventLog& eventlog;
+      Pinetime::Components::Timer process_cmd_timer;
     };
   }
 }

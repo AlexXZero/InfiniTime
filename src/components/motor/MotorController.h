@@ -1,15 +1,14 @@
 #pragma once
 
-#include <FreeRTOS.h>
-#include <timers.h>
 #include <cstdint>
+#include "components/utility/Timer.h"
 
 namespace Pinetime {
   namespace Controllers {
 
     class MotorController {
     public:
-      MotorController() = default;
+      MotorController();
 
       void Init();
       void RunForDuration(uint8_t motorDuration);
@@ -17,10 +16,8 @@ namespace Pinetime {
       void StopRinging();
 
     private:
-      static void Ring(TimerHandle_t xTimer);
-      static void StopMotor(TimerHandle_t xTimer);
-      TimerHandle_t shortVib;
-      TimerHandle_t longVib;
+      Components::Timer shortVib;
+      Components::Timer longVib;
     };
   }
 }
