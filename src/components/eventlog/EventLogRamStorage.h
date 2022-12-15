@@ -12,11 +12,11 @@ namespace Pinetime {
         memset(pages, 0xff, sizeof(pages));
       }
 
-      virtual constexpr size_t PagesAmount() const {
+      virtual size_t PagesAmount() const {
         return PAGES_AMOUNT;
       }
 
-      virtual constexpr size_t PageSize() const {
+      virtual size_t PageSize() const {
         return PAGE_SIZE;
       }
 

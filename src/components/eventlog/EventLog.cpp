@@ -1,6 +1,8 @@
 #include "EventLog.h"
+#ifndef UNIT_TESTS
 #include "systemtask/SystemTask.h"
 #include "components/datetime/DateTimeController.h"
+#endif
 
 using namespace Pinetime::Components;
 

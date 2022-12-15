@@ -7,11 +7,11 @@ namespace Pinetime {
   namespace Components {
     class EventLogInternalFlashStorage: public IEventLogStorage {
     public:
-      virtual constexpr size_t PagesAmount() const {
+      virtual size_t PagesAmount() const {
         return PAGES_AMOUNT;
       }
 
-      virtual constexpr size_t PageSize() const {
+      virtual size_t PageSize() const {
         return WORDS_PER_PAGE;
       }
 
