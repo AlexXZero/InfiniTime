@@ -25,17 +25,25 @@ private:
 
 using namespace Pinetime::Components;
 
-Timer* Timer::p_active_timers = nullptr;
+HeaplessSortedQueue<Timer> Timer::p_active_timers;
 
+/*
+ * Add the timer to the active timers queue. The next timer due is in front.
+ */
 void Timer::Start() {
   IRQ_Guard guard;
   start = nrf_rtc_counter_get(portNRF_RTC_REG);
-  add_to_list();
+  p_active_timers.Emplace(this);
+  is_active = true;
 }
 
+/*
+ * Deactivate a timer and remove it from the timers queue.
+ */
 void Timer::Stop() {
   IRQ_Guard guard;
-  remove_from_list();
+  p_active_timers.Remove(this);
+  is_active = false;
 }
 
 void Timer::ChangePeriod(tick_t newPeriod) {
@@ -47,52 +55,18 @@ void Timer::Process() {
   tick_t now = nrf_rtc_counter_get(portNRF_RTC_REG);
   IRQ_Guard guard;
 
-  while (p_active_timers != nullptr) {
-    if (GetTimeDiff(now, p_active_timers->GetExpiryTime()) > 0) {
-      break;
-    }
-
-    Timer* p_timer = p_active_timers;
-    p_active_timers = p_timer->p_next;
+  while (!p_active_timers.Empty() && (*p_active_timers.begin() <= now)) {
+    Timer* p_timer = p_active_timers.begin();
+    p_active_timers.Pop();
     p_timer->is_active = false;
     if (p_timer->mode == Mode::Repeated) {
       p_timer->start += p_timer->period;
-      p_timer->add_to_list();
+      p_active_timers.Emplace(p_timer);
+      p_timer->is_active = true;
     }
 
     guard.Disable();
     p_timer->callback();
     guard.Enable();
-  }
-}
-
-/*
- * Add the timer to the active timers. The next timer due is in front.
- */
-void Timer::add_to_list() {
-  Timer** p_timer = &p_active_timers;
-  while (*p_timer != nullptr) {
-    if (GetTimeDiff(GetExpiryTime(), (*p_timer)->GetExpiryTime()) > 0) {
-      break;
-    }
-
-    p_timer = &(*p_timer)->p_next;
-  }
-
-  p_next = *p_timer;
-  *p_timer = this;
-  is_active = true;
-}
-
-/*
- * Deactivate a timer and remove it from the timers queue.
- */
-void Timer::remove_from_list() {
-  for (Timer** p = &p_active_timers; *p != nullptr; p = &(*p)->p_next) {
-    if (*p == this) {
-      *p = p_next;
-      is_active = false;
-      break;
-    }
   }
 }
