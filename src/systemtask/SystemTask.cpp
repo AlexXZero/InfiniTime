@@ -104,7 +104,8 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                      spiNorFlash,
                      heartRateController,
                      motionController,
-                     fs) {
+                     fs),
+    console(*this, nimbleController, motorController) {
 }
 
 void SystemTask::Start() {
@@ -169,6 +170,7 @@ void SystemTask::Work() {
   heartRateSensor.Disable();
   heartRateApp.Start();
 
+  console.Init();
   buttonHandler.Init(this);
 
   // Setup Interrupts
@@ -450,6 +452,9 @@ void SystemTask::Work() {
           } else {
             nimbleController.DisableRadio();
           }
+          break;
+        case Messages::ConsoleProcess:
+          console.Process();
           break;
         default:
           break;
