@@ -13,12 +13,15 @@
 #include <components/motion/MotionController.h>
 
 #include "systemtask/SystemMonitor.h"
+#include "components/eventlog/EventLog.h"
+#include "components/eventlog/EventLogInternalFlashStorage.h"
 #include "components/ble/NimbleController.h"
 #include "components/ble/NotificationManager.h"
 #include "components/motor/MotorController.h"
 #include "components/timer/TimerController.h"
 #include "components/alarm/AlarmController.h"
 #include "components/fs/FS.h"
+#include "components/console/Console.h"
 #include "touchhandler/TouchHandler.h"
 #include "buttonhandler/ButtonHandler.h"
 #include "buttonhandler/ButtonActions.h"
@@ -125,7 +128,11 @@ namespace Pinetime {
       Pinetime::Controllers::FS& fs;
       Pinetime::Controllers::TouchHandler& touchHandler;
       Pinetime::Controllers::ButtonHandler& buttonHandler;
+      //Pinetime::Components::EventLogRamStorage<100, 5> eventlogStorage;
+      Pinetime::Components::EventLogInternalFlashStorage eventlogStorage;
+      Pinetime::Components::EventLog eventlog;
       Pinetime::Controllers::NimbleController nimbleController;
+      Pinetime::Components::Console console;
 
       static void Process(void* instance);
       void Work();

@@ -24,6 +24,7 @@ namespace Pinetime {
       OnNewHour,
       OnNewHalfHour,
       OnChargingEvent,
+      ConsoleProcess,
       OnPairing,
       SetOffAlarm,
       StopRinging,
@@ -31,6 +32,7 @@ namespace Pinetime {
       BatteryPercentageUpdated,
       StartFileTransfer,
       StopFileTransfer,
+      SwapEventlogPages,
       BleRadioEnableToggle
     };
   }
