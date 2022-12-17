@@ -2,46 +2,7 @@
 
 #include <cstdint>
 #include <functional>
-
-template <typename T>
-class HeaplessSortedQueue {
-public:
-  T* begin() {
-    return head;
-  }
-  const T* begin() const {
-    return head;
-  }
-  constexpr T* end() const {
-    return nullptr;
-  }
-  void Emplace(T* element) {
-    T** it = &head;
-    while ((*it != end()) && (*element >= **it)) {
-      it = &(*it)->p_next;
-    }
-
-    element->p_next = *it;
-    *it = element;
-  }
-  void Remove(const T* element) {
-    for (T** it = &head; *it != end(); it = &(*it)->p_next) {
-      if (*it == element) {
-        *it = element->p_next;
-        break;
-      }
-    }
-  }
-  void Pop() {
-    head = head->p_next;
-  }
-  bool Empty() const {
-    return begin() == end();
-  }
-
-private:
-  T* head = nullptr;
-};
+#include "Queue.h" // for Pinetime::Utility::HeaplessQueue
 
 namespace Pinetime {
   namespace Components {
@@ -130,8 +91,8 @@ namespace Pinetime {
       tick_t period;
       tick_t start;
       Timer* p_next;
-      friend class HeaplessSortedQueue<Timer>;
-      static HeaplessSortedQueue<Timer> p_active_timers;
+      friend class Utility::HeaplessSortedQueue<Timer>;
+      static Utility::HeaplessSortedQueue<Timer> active_timers;
     };
   }
 }
