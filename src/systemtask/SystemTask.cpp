@@ -394,6 +394,7 @@ void SystemTask::Work() {
           // We might be sleeping (with TWI device disabled.
           // Remember we'll have to reset the counter next time we're awake
           stepCounterMustBeReset = true;
+          GoToRunning(); // Request to awake
           break;
         case Messages::OnNewHour:
           using Pinetime::Controllers::AlarmController;
