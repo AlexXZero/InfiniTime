@@ -6,22 +6,19 @@
 
 namespace Pinetime {
   namespace Components {
-    class Timer {
+    class Timer: public Utility::HeaplessQueueObject<Timer> {
     public:
       using tick_t = uint32_t;
       using tick_diff_t = int32_t;
       enum class Mode : uint8_t { SingleShot, Repeated };
 
-      Timer() = default;
       Timer(tick_t period, Mode mode, const std::function<void()>&& callback)
-        : callback {callback}, mode {mode}, is_active(false), period {period}, start {0}, p_next {nullptr} {
+        : callback {callback}, mode {mode}, is_active(false), period {period}, start {0} {
       }
       Timer(tick_t period, const std::function<void()>&& callback) : Timer(period, Mode::SingleShot, std::move(callback)) {
       }
-      ~Timer() {
-        if (IsActive()) {
-          Stop();
-        }
+      void Invoke() const {
+        callback();
       }
       void Start();
       void Start(tick_t newPeriod) {
@@ -44,45 +41,13 @@ namespace Pinetime {
       tick_t GetExpiryTime() const {
         return start + period;
       }
-      static void Process();
-
-      /**
-       * This function is used for comparing two time points.
-       *
-       * @note You have to use this function to avoid issues with counter overflow.
-       * @note Maximum expected difference should be less than (2^31 - 1).
-       *
-       * @return positive number in case if @end is higher than @begin.
-       * @return 0 if @end is equal @begin.
-       * @return negative number if @end is less than @begin.
-       */
-      static inline tick_diff_t GetTimeDiff(tick_t begin, tick_t end) {
-        return static_cast<tick_diff_t>(end - begin);
-      }
-      bool operator<(tick_t time) const {
-        return static_cast<tick_diff_t>(GetExpiryTime() - time) < 0;
+      bool operator<(const Timer& timer) const {
+        return static_cast<tick_diff_t>(GetExpiryTime() - timer.GetExpiryTime()) < 0;
       }
       bool operator<=(tick_t time) const {
         return static_cast<tick_diff_t>(GetExpiryTime() - time) <= 0;
       }
-      bool operator>(tick_t time) const {
-        return static_cast<tick_diff_t>(GetExpiryTime() - time) > 0;
-      }
-      bool operator>=(tick_t time) const {
-        return static_cast<tick_diff_t>(GetExpiryTime() - time) >= 0;
-      }
-      bool operator<(const Timer& timer) const {
-        return static_cast<tick_diff_t>(GetExpiryTime() - timer.GetExpiryTime()) < 0;
-      }
-      bool operator<=(const Timer& timer) const {
-        return static_cast<tick_diff_t>(GetExpiryTime() - timer.GetExpiryTime()) <= 0;
-      }
-      bool operator>(const Timer& timer) const {
-        return static_cast<tick_diff_t>(GetExpiryTime() - timer.GetExpiryTime()) > 0;
-      }
-      bool operator>=(const Timer& timer) const {
-        return static_cast<tick_diff_t>(GetExpiryTime() - timer.GetExpiryTime()) >= 0;
-      }
+      static void Process();
 
     private:
       std::function<void()> callback;
@@ -90,9 +55,7 @@ namespace Pinetime {
       bool is_active;
       tick_t period;
       tick_t start;
-      Timer* p_next;
-      friend class Utility::HeaplessSortedQueue<Timer>;
-      static Utility::HeaplessSortedQueue<Timer> active_timers;
+      static Utility::HeaplessQueue<Timer> active_timers;
     };
   }
 }

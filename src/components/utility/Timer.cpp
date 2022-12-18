@@ -25,7 +25,7 @@ private:
 
 using namespace Pinetime::Components;
 
-Pinetime::Utility::HeaplessSortedQueue<Timer> Timer::active_timers;
+Pinetime::Utility::HeaplessQueue<Timer> Timer::active_timers;
 
 /*
  * Add the timer to the active timers queue. The next timer due is in front.
@@ -33,7 +33,7 @@ Pinetime::Utility::HeaplessSortedQueue<Timer> Timer::active_timers;
 void Timer::Start() {
   IRQ_Guard guard;
   start = nrf_rtc_counter_get(portNRF_RTC_REG);
-  active_timers.Emplace(this);
+  active_timers.InsertSorted(*this);
   is_active = true;
 }
 
@@ -42,7 +42,7 @@ void Timer::Start() {
  */
 void Timer::Stop() {
   IRQ_Guard guard;
-  active_timers.Remove(this);
+  active_timers.Extract(*this);
   is_active = false;
 }
 
@@ -52,21 +52,21 @@ void Timer::ChangePeriod(tick_t newPeriod) {
 }
 
 void Timer::Process() {
-  tick_t now = nrf_rtc_counter_get(portNRF_RTC_REG);
   IRQ_Guard guard;
+  tick_t now = nrf_rtc_counter_get(portNRF_RTC_REG);
 
-  while (!active_timers.Empty() && (*active_timers.begin() <= now)) {
-    Timer* p_timer = active_timers.begin();
-    active_timers.Pop();
-    p_timer->is_active = false;
-    if (p_timer->mode == Mode::Repeated) {
-      p_timer->start += p_timer->period;
-      active_timers.Emplace(p_timer);
-      p_timer->is_active = true;
+  while (!active_timers.Empty() && (active_timers.Front() <= now)) {
+    Timer& timer = active_timers.Front();
+    active_timers.Extract(timer);
+    if (timer.mode == Mode::Repeated) {
+      timer.start += timer.period;
+      active_timers.InsertSorted(timer);
+    } else {
+      timer.is_active = false;
     }
 
     guard.Disable();
-    p_timer->callback();
+    timer.Invoke();
     guard.Enable();
   }
 }
